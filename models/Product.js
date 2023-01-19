@@ -5,7 +5,8 @@ const productSchema=new mongoose.Schema({
     productId:{
         type:String,
         required:true,
-        unique:true
+        unique:true,
+        index:true
     },
     title:{
         type:String,

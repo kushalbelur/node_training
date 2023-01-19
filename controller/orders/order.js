@@ -1,12 +1,92 @@
 const orderModel=require('../../models/Order')
 const transactionModel=require('../../models/TransactionModel')
+const cartModel=require('../../models/Cart')
+const orderService=require('../../utils/pdfGeneration')
+const productModel=require('../../models/Product')
+const xlsGeneration=require('../../utils/xlsxGeneration')
+const mongoose=require('mongoose')
 
 const orderCtrl={
     create: async (req,res)=>{
         try {
-            const newOrder=await orderModel(req.body)
-           await newOrder.save()
-            res.status(200).json({msg:"Products ordered successfully",details:newOrder})
+        //     const newOrder=await orderModel(req.body)
+        //    await newOrder.save()
+        const soId=mongoose.Types.ObjectId();
+        const getMyCart=await cartModel.aggregate([{$match:{
+            userId:req.body.userId
+        }},{$project:{_id:0,userId:1,productId:1,quantity:1}},{
+            $lookup:{
+                from:'Products',
+                localField:'productId',
+                foreignField:'productId',
+                as:'result',
+            }
+        },{
+            $unwind:{
+                path:'$result'
+            }
+        },
+        {
+            $project:{
+                productId:'$result.productId',
+                title:'$result.title',
+                img:'$result.img',
+                size:'$result.size',
+                quantity:1,
+                price:'$result.price',
+                total:{$multiply:['$result.price','$quantity']},
+
+            }
+        },{
+            $group:{
+                _id:'$productId',
+                total:{'$sum':'$total'},
+                price:{'$first':'$price'},
+                img:{'$first':'$img'},
+                quantity:{'$sum':'$quantity'},
+                
+            }
+        }
+        // {
+        //     $project:{
+        //         price:'$result.price',
+        //         total:{}
+        //     }
+        // }
+    // {
+    //     $unwind:{
+    //         path:$result,
+    //         preserveNullAndEmptyArrays:true
+    //     }
+
+    // },
+    // {
+    //     $project:{
+    //         'result':1,
+    //         'quantity':1,
+    //         'price':{$multiply:['$result[0].price','$quantity']}
+    //     }
+    // }
+    //{
+    //    $project:{
+    //        userId:1,
+    //        productId:1,
+    //        quantity:1,
+    //        price:{$multiply:[$quantity,$result.price]}
+    //    } 
+    // }
+])
+        // for(let i=0;i<getMyCart.length;i++){
+
+        //     const placeOrder=await orderModel.insertMany(getMyCart[i])
+        // }
+        // const product=await productModel.findOne();
+        // const pdf=orderService.generatePDF(product);
+        // console.log(getMyCart)
+        
+            res.status(200).json({msg:"Products ordered successfully",details:getMyCart})
+            // res.setHeader('Content-Type','application/pdf')
+            // res.send(pdf)
         } catch (error) {
             res.status(500).json({msg:error.message})
         }

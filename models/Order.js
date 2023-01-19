@@ -5,6 +5,9 @@ const orderSchema=new mongoose.Schema({
         type:String,
         required:true
     },
+    soId:{
+        type:mongoose.Types.ObjectId
+    },
     products:[
         {
             productId:{
@@ -16,10 +19,10 @@ const orderSchema=new mongoose.Schema({
             }
         }
     ],
-    amount:{
-        type:Number,
-        required:true
-    },
+    // amount:{
+    //     type:Number,
+    //     required:true
+    // },
     address:{
         type:Object
     },
